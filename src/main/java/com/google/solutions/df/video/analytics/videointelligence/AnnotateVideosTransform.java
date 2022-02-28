@@ -16,7 +16,6 @@
 package com.google.solutions.df.video.analytics.videointelligence;
 
 import java.io.IOException;
-import java.util.List;
 
 import com.google.api.gax.rpc.BidiStream;
 import com.google.auto.value.AutoValue;
@@ -65,7 +64,7 @@ public abstract class AnnotateVideosTransform
 
   public static class ReadFile extends DoFn<FileIO.ReadableFile, KV<String, ByteString>> {
     @ProcessElement
-    public void processsElement(ProcessContext c) throws IOException {
+    public void processElement(ProcessContext c) throws IOException {
       FileIO.ReadableFile file = c.element();
       String fileName = file.getMetadata().resourceId().toString();
       c.output(KV.of(fileName, ByteString.copyFrom(file.readFullyAsBytes())));
