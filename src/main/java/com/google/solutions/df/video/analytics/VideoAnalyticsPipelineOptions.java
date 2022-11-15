@@ -15,11 +15,14 @@
  */
 package com.google.solutions.df.video.analytics;
 
-import com.google.cloud.videointelligence.v1.Feature;
 import java.util.List;
+import java.util.Set;
+
+import com.google.cloud.videointelligence.v1p3beta1.StreamingFeature;
 import org.apache.beam.sdk.options.Default;
 import org.apache.beam.sdk.options.Description;
 import org.apache.beam.sdk.options.PipelineOptions;
+import org.apache.beam.sdk.options.Validation;
 
 public interface VideoAnalyticsPipelineOptions extends PipelineOptions {
 
@@ -38,10 +41,10 @@ public interface VideoAnalyticsPipelineOptions extends PipelineOptions {
 
   void setErrorTopic(String value);
 
-  @Description("Features")
-  Feature getFeatures();
+  @Description("Streaming video feature")
+  StreamingFeature getFeature();
 
-  void setFeatures(Feature value);
+  void setFeature(StreamingFeature value);
 
   @Description("Window time interval (in seconds) for outputing results")
   @Default.Integer(1)
@@ -62,8 +65,52 @@ public interface VideoAnalyticsPipelineOptions extends PipelineOptions {
 
   void setConfidenceThreshold(Double value);
 
-  @Description("Reference of the output BigQuery table")
-  String getTableReference();
+  @Description("Simulate annotations")
+  @Default.Boolean(false)
+  boolean isSimulate();
 
-  void setTableReference(String value);
+  void setSimulate(boolean value);
+
+  @Description("Key range")
+  @Default.Integer(1)
+  Integer getKeyRange();
+
+  void setKeyRange(Integer value);
+
+  @Description("Video annotation request batch size")
+  @Default.Integer(1)
+  Integer getBatchSize();
+
+  void setBatchSize(Integer value);
+
+  @Description("Project id to be used for Video Intelligence API requests and BigQuery dataset")
+  @Validation.Required
+  String getProjectId();
+
+  void setProjectId(String value);
+
+  @Description("BigQuery dataset")
+  @Validation.Required
+  String getDatasetName();
+
+  void setDatasetName(String value);
+
+  @Description("Table name for object tracking annotations")
+  @Validation.Required
+  String getObjectTrackingAnnotationsTable();
+
+  void setObjectTrackingAnnotationsTable(String value);
+
+  @Description("Table name for label annotations")
+  @Validation.Required
+  String getLabelAnnotationsTable();
+
+  void setLabelAnnotationsTable(String value);
+
+
+  @Description("GCS metadata values to store in BigQuery")
+  @Validation.Required
+  Set<String> getMetadataKeys();
+
+  void setMetadataKeys(Set<String> value);
 }

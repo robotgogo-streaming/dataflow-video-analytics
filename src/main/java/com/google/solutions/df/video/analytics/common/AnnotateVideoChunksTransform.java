@@ -17,7 +17,6 @@ package com.google.solutions.df.video.analytics.common;
 
 import com.google.api.gax.rpc.BidiStream;
 import com.google.auto.value.AutoValue;
-import com.google.cloud.videointelligence.v1.Feature;
 import com.google.cloud.videointelligence.v1p3beta1.StreamingAnnotateVideoRequest;
 import com.google.cloud.videointelligence.v1p3beta1.StreamingAnnotateVideoResponse;
 import com.google.cloud.videointelligence.v1p3beta1.StreamingFeature;
@@ -56,13 +55,13 @@ public abstract class AnnotateVideoChunksTransform
       apiResponseSuccessElements = new TupleTag<KV<String, StreamingAnnotateVideoResponse>>() {};
   private static final TupleTag<Row> apiResponseFailedElements = new TupleTag<Row>() {};
 
-  public abstract Feature features();
+  public abstract StreamingFeature features();
 
   public abstract String errorTopic();
 
   @AutoValue.Builder
   public abstract static class Builder {
-    public abstract Builder setFeatures(Feature features);
+    public abstract Builder setFeatures(StreamingFeature features);
 
     public abstract Builder setErrorTopic(String errorTopic);
 
@@ -77,8 +76,7 @@ public abstract class AnnotateVideoChunksTransform
   public PCollection<Row> expand(PCollection<KV<String, ByteString>> input) {
     PCollectionTuple videoApiResults =
         input.apply(
-            "StreamingObjectTracking",
-            ParDo.of(new StreamingObjectTracking())
+            ParDo.of(new StreamingAnnotate(features()))
                 .withOutputTags(
                     apiResponseSuccessElements, TupleTagList.of(apiResponseFailedElements)));
 
@@ -108,13 +106,18 @@ public abstract class AnnotateVideoChunksTransform
         .apply("ProcessResponse", ParDo.of(new FormatAnnotationSchemaDoFn()));
   }
 
-  public static class StreamingObjectTracking
+  public static class StreamingAnnotate
       extends DoFn<KV<String, ByteString>, KV<String, StreamingAnnotateVideoResponse>> {
 
+    private final StreamingFeature features;
     private final Counter numberOfRequests =
         Metrics.counter(AnnotateVideoChunksTransform.class, "numberOfRequests");
     private StreamingVideoConfig streamingVideoConfig;
     BidiStream<StreamingAnnotateVideoRequest, StreamingAnnotateVideoResponse> streamCall;
+
+    public StreamingAnnotate(StreamingFeature features) {
+      this.features = features;
+    }
 
     // [START loadSnippet_2]
     @Setup
@@ -123,7 +126,7 @@ public abstract class AnnotateVideoChunksTransform
           StreamingObjectTrackingConfig.newBuilder().build();
       streamingVideoConfig =
           StreamingVideoConfig.newBuilder()
-              .setFeature(StreamingFeature.STREAMING_OBJECT_TRACKING)
+              .setFeature(features)
               .setObjectTrackingConfig(objectTrackingConfig)
               .build();
     }
@@ -147,7 +150,6 @@ public abstract class AnnotateVideoChunksTransform
         for (StreamingAnnotateVideoResponse response : streamCall) {
           out.get(apiResponseSuccessElements).output(KV.of(fileName, response));
           if (response.hasError()) {
-
             Row errorRow =
                 Row.withSchema(Util.errorSchema)
                     .addValues(
