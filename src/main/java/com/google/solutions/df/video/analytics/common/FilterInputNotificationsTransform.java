@@ -53,7 +53,7 @@ public abstract class FilterInputNotificationsTransform
   // Event type sent when a new object (or a new generation of an existing object)
   // is *successfully* created in the bucket
   private static final String OBJECT_FINALIZE = "OBJECT_FINALIZE";
-  // Allowed image extensions supported by the Vision API
+  // Allowed extensions supported by the Video API
   private static final String FILE_PATTERN = "(^.*\\.(?i)(mov|mpeg4|mp4|avi)$)";
 
   @AutoValue.Builder
